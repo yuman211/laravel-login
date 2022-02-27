@@ -10,10 +10,12 @@ use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
+
     /**
      * @return view
      */
-    public function showLogin(){
+    public function showLogin()
+    {
         return view('login.login_form');
     }
 
@@ -22,20 +24,37 @@ class AuthController extends Controller
      * @param App\Http\Requests\LoginFormRequest
      * $request
      */
-    public function login(LoginFormRequest $request){
+    public function login(LoginFormRequest $request)
+    {
 
-        $credentials=$request->only('email,password');
+        $credentials = $request->only('email', 'password');
 
-        if(Auth::attempt($credentials)){
+        if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 
-            return redirect('home')->with('login_success','ログイン成功しました!');
+            return redirect()->route('home')->with('success', 'ログイン成功しました!');
         }
 
         return back()->withErrors([
-            'login_error'=>'メールアドレスかパスワードが間違っています。',
+            'danger' => 'メールアドレスかパスワードが間違っています。',
 
         ]);
     }
 
+    /**
+     * ユーザーをアプリケーションからログアウトさせる
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function logout(Request $request)
+    {
+        Auth::logout();
+
+        $request->session()->invalidate(); //セッションを削除
+
+        $request->session()->regenerateToken(); //セッションを作り直す
+
+        return redirect()->route('show')->with('danger', 'ログアウトしました!');
+    }
 }

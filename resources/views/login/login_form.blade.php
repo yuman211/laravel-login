@@ -17,15 +17,14 @@
     <form class="form-signin" method="POST" action="{{route('login')}}">
         @csrf
         <h1 class="h3 mb-3 fw-normal">ログインフォーム</h1>
-        @if($errors->any())
-        <div class="alert alert-danger">
+            @foreach($errors->all() as $error)
             <ul>
-                @foreach($errors->all() as $error)
                 <li>{{$error}}</li>
-                @endforeach
             </ul>
-        </div>
-        @endif
+            @endforeach
+
+        <x-alert type="danger" :session="session('danger')" />
+
         <div class="form-floating">
             <input type="email" class="form-control" name="email" id="floatingInput" placeholder="name@example.com">
             <label for="floatingInput">Email address</label>

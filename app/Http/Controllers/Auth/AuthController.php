@@ -12,6 +12,11 @@ use App\Models\User;
 
 class AuthController extends Controller
 {
+    public function __construct(User $user){
+        $this->user = $user;
+    }
+
+
 
     /**
      * @return view
@@ -31,10 +36,10 @@ class AuthController extends Controller
         $credentials = $request->only('email', 'password');
 
         //アカウントがロックされていたら弾く
-        $user = User::where('email','=',$credentials['email'])->first();
+        $user = $this->user->getUserByEmail($credentials['email']);
 
         if(!is_null($user)){
-            if($user->locked_flg === 1){
+            if($this->user->isAccountLocked($user)){
                 return back()->withErrors([
                     'danger' => 'アカウントがロックされています。',
 
@@ -43,21 +48,17 @@ class AuthController extends Controller
             if (Auth::attempt($credentials)) {
                 $request->session()->regenerate();
                 //成功したらエラーカウントを０にする
-                if($user->error_count > 0){
-                    $user->error_count = 0;
-                    $user->save();
-                }
+                $this->user->resetErrorCount($user);
 
                 return redirect()->route('home')->with('success', 'ログイン成功しました!');
             }
 
         //ログイン失敗したらエラーカウントを１増やす
-            $user->error_count += 1;
+            $user->error_count = $this->user->addErrorCount($user->error_count);
 
         //エラーカウントが６以上の場合はアカウントをロックする
-            if($user->error_count >5){
-                $user->locked_flg =1;
-                $user->save();
+            if($this->user->lockAccount($user)){
+
                 return back()->withErrors([
                     'danger' => 'アカウントがロックされました。解除したい場合は運営者に連絡してください。',
 
